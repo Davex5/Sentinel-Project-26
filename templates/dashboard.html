@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-header">
+
+    <div>
+
+        <h1>🛡️ User Dashboard</h1>
+
+        <p>Machine Learning Login Anomaly Detection System</p>
+
+    </div>
+
+</div>
+
+{% if last_anomaly %}
+
+<div class="stats-grid">
+
+    <div class="stat-card">
+
+        <span>Risk Level</span>
+
+        <h2>{{ last_anomaly.risk_level|upper }}</h2>
+
+    </div>
+
+    <div class="stat-card">
+
+        <span>Risk Score</span>
+
+        <h2>{{ last_anomaly.risk_score }}/100</h2>
+
+    </div>
+
+    <div class="stat-card">
+
+        <span>Anomaly Score</span>
+
+        <h2>{{ "%.4f"|format(last_anomaly.anomaly_score) }}</h2>
+
+    </div>
+
+    <div class="stat-card">
+
+        <span>System Status</span>
+
+        <h2>Active</h2>
+
+    </div>
+
+</div>
+
+<div class="card">
+
+    <h2>🔍 Latest Login Analysis</h2>
+
+    <table class="dashboard-table">
+
+        <tr>
+
+            <td><strong>Risk Level</strong></td>
+
+            <td>{{ last_anomaly.risk_level|upper }}</td>
+
+        </tr>
+
+        <tr>
+
+            <td><strong>Risk Score</strong></td>
+
+            <td>{{ last_anomaly.risk_score }}/100</td>
+
+        </tr>
+
+        <tr>
+
+            <td><strong>Anomaly Score</strong></td>
+
+            <td>{{ "%.4f"|format(last_anomaly.anomaly_score) }}</td>
+
+        </tr>
+
+        <tr>
+
+            <td><strong>Analysis</strong></td>
+
+            <td>{{ last_anomaly.anomaly_type }}</td>
+
+        </tr>
+
+        <tr>
+
+            <td><strong>System Response</strong></td>
+
+            <td>{{ last_anomaly.system_response }}</td>
+
+        </tr>
+
+        <tr>
+
+            <td><strong>Reason</strong></td>
+
+            <td>{{ last_anomaly.explanation }}</td>
+
+        </tr>
+
+    </table>
+
+</div>
+
+{% endif %}
+
+<div class="card">
+
+    <h2>🖥 Recent Login Activity</h2>
+
+    <table class="dashboard-table">
+
+        <thead>
+
+            <tr>
+
+                <th>Date & Time</th>
+
+                <th>IP Address</th>
+
+                <th>Device</th>
+
+                <th>Browser</th>
+
+                <th>Location</th>
+
+                <th>Status</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for activity in activities %}
+
+            <tr>
+
+                <td>{{ activity.login_time }}</td>
+
+                <td>{{ activity.ip_address }}</td>
+
+                <td>{{ activity.device_type }}</td>
+
+                <td>{{ activity.browser_type }}</td>
+
+                <td>{{ activity.login_location }}</td>
+
+                <td>
+
+                    {% if activity.login_status == "success" %}
+
+                        🟢 Success
+
+                    {% else %}
+
+                        🔴 Failed
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

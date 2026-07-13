@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1>🛡️ Security Operations Center</h1>
+        <p>Machine Learning Login Anomaly Detection Dashboard</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <span>Total Logins</span>
+        <h2 id="totalLogins">{{ total_logins }}</h2>
+    </div>
+    <div class="stat-card">
+        <span>Successful</span>
+        <h2>{{ successful_logins }}</h2>
+    </div>
+    <div class="stat-card">
+        <span>Failed</span>
+        <h2 id="failedLogins">{{ failed_logins }}</h2>
+    </div>
+    <div class="stat-card">
+        <span>Low Risk</span>
+        <h2 id="lowRisk">{{ risk_counts.low }}</h2>
+    </div>
+    <div class="stat-card">
+        <span>Medium Risk</span>
+        <h2 id="mediumRisk">{{ risk_counts.medium }}</h2>
+    </div>
+    <div class="stat-card">
+        <span>High Risk</span>
+        <h2 id="highRisk">{{ risk_counts.high }}</h2>
+    </div>
+</div>
+
+<div class="chart-grid">
+    <div class="card">
+        <h2>📊 Risk Distribution</h2>
+        <div class="chart-box">
+            <canvas id="riskChart" height="220"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <h2>📈 Login Statistics</h2>
+        <div class="chart-box">
+            <canvas id="loginChart" height="220"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>🚨 Security Alerts</h2>
+    <table class="dashboard-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Risk</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in alerts %}
+            <tr>
+                <td>{{ alert.id }}</td>
+                <td>
+                    <strong>{{ alert.anomaly_report.risk_level|upper }}</strong>
+                    <br>
+                    {{ alert.anomaly_report.risk_score }}/100
+                </td>
+                <td>{{ alert.alert_message }}</td>
+                <td>
+                    {% if alert.alert_status == "open" %}
+                        🔴 Open
+                    {% else %}
+                        🟢 Resolved
+                    {% endif %}
+                </td>
+                <td>
+                    {% if alert.alert_status == "open" %}
+                    <form action="{{ url_for('resolve_alert', alert_id=alert.id) }}" method="POST">
+                        <input
+                            type="hidden"
+                            name="response"
+                            value="Reviewed by Administrator"
+                        >
+                        <button class="btn-primary" type="submit">
+                            Resolve
+                        </button>
+                    </form>
+                    {% else %}
+                        ✅ Done
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>🖥 Recent Login Activity</h2>
+    <table class="dashboard-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Time</th>
+                <th>IP Address</th>
+                <th>Device</th>
+                <th>Browser</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for login in recent_logins %}
+            <tr>
+                <td>{{ login.username_attempted }}</td>
+                <td>{{ login.login_time }}</td>
+                <td>{{ login.ip_address }}</td>
+                <td>{{ login.device_type }}</td>
+                <td>{{ login.browser_type }}</td>
+                <td>
+                    {% if login.login_status=="success" %}
+                        🟢 Success
+                    {% else %}
+                        🔴 Failed
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>🤖 Machine Learning Model</h2>
+    <table class="dashboard-table">
+        <tr>
+            <td><strong>Algorithm</strong></td>
+            <td>Isolation Forest</td>
+        </tr>
+        <tr>
+            <td><strong>Status</strong></td>
+            <td>🟢 Active</td>
+        </tr>
+        <tr>
+            <td><strong>Retraining</strong></td>
+            <td>Automatic Every 20 Successful Logins</td>
+        </tr>
+        <tr>
+            <td><strong>Behaviour Features</strong></td>
+            <td>9 Features</td>
+        </tr>
+    </table>
+    <br>
+    <form action="{{ url_for('api_retrain') }}" method="POST">
+        <button class="btn-primary" type="submit">
+            🔄 Retrain Machine Learning Model
+        </button>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const riskCanvas = document.getElementById("riskChart");
+    if (riskCanvas) {
+        new Chart(riskCanvas, {
+            type: "doughnut",
+            data: {
+                labels: ["Low", "Medium", "High"],
+                datasets: [{
+                    data: [
+                        {{ risk_counts.low }},
+                        {{ risk_counts.medium }},
+                        {{ risk_counts.high }}
+                    ],
+                    backgroundColor: [
+                        "#22c55e",
+                        "#facc15",
+                        "#ef4444"
+                    ],
+                    borderWidth: 2,
+                    borderColor: "#111827"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                cutout: "60%",
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: {
+                            color: "#ffffff",
+                            font: {
+                                size: 14
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const loginCanvas = document.getElementById("loginChart");
+    if (loginCanvas) {
+        new Chart(loginCanvas, {
+            type: "bar",
+            data: {
+                labels: [
+                    "Successful",
+                    "Failed"
+                ],
+                datasets: [{
+                    label: "Login Attempts",
+                    data: [
+                        {{ successful_logins }},
+                        {{ failed_logins }}
+                    ],
+                    backgroundColor: [
+                        "#22c55e",
+                        "#ef4444"
+                    ],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: "#ffffff"
+                        },
+                        grid: {
+                            color: "#374151"
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: "#ffffff"
+                        },
+                        grid: {
+                            color: "#374151"
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
