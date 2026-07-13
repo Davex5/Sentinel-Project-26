@@ -110,6 +110,3 @@ Lasisi David Adebayo
 
 Department of Cybersecurity
 Caleb University
-:::
-
-You can save this file as README.md inside your project folder.
